@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/toDoApp/style.css">
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <title>Tasks App</title>
+</head>
+
+<body>
+    <div id="mainContainer">
+        <div id="innerContainer">
+            <div id="title">
+                <h1>To Do List</h1>
+            </div>
+            <div id="addContainer">
+                <button id="add-btn">
+                    <span class="material-symbols-outlined">
+                        add_box
+                    </span></button>
+            </div>
+
+
+
+            <!-- all task container -->
+            <div id="tasks">
+                <!-- individual task -->
+                <div id="task">
+                    <div id="infoContainer">
+                        <div id="taskTitle">Gym</div>
+                        <div id="dateCreated">today</div>
+                    </div>
+                    <div id="iconsContainer">
+                        <Button id="editTask" style="background-color: rgb(53, 53, 235);">
+                            <span class="material-symbols-outlined">
+                                edit_note
+                            </span>
+                        </Button>
+                        <Button id="completeTask" style="background-color: rgb(48, 190, 48);">
+                            <span class="material-symbols-outlined">
+                                check_circle
+                            </span>
+                        </Button>
+                        <Button id="deleteTask" style="background-color: rgb(182, 0, 0);">
+                            <span class="material-symbols-outlined">
+                                delete
+                            </span>
+                        </Button>
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+    <script>
+
+
+        let tasks = [
+            {
+                "title": "coding",
+                "date": "10/02/2023",
+                "isDone": false
+            },
+            {
+                "title": "cooking",
+                "date": "15/02/2023",
+                "isDone": false
+            }
+        ];
+
+
+        // get tasks from the local storage 
+        function getTasksFromStorage() {
+            //convert it from a string to an object
+            let retrievedTasks = JSON.parse(localStorage.getItem("tasks"));
+
+            tasks = retrievedTasks ?? [];
+        }
+
+        getTasksFromStorage();
+        // a function to update the task content everytime we make a change **need to call it after every change
+        function updateTasks() {
+            document.getElementById("tasks").innerHTML = ""
+
+            let index = 0;
+            for (task of tasks) {
+
+                let content =
+                    `
+                        <div id="tasks">
+                            <!-- individual task -->
+                            <div class="task ${task.isDone ? "done" : ""}">
+                                <div id="infoContainer">
+                                    <div id="taskTitle">${task.title}</div>
+                                    <div id="dateCreated">${task.date}</div>
+                                </div>
+                                <div id="iconsContainer">
+                                    <Button id="editTask" onclick="updateTask(${index})" style="background-color: rgb(53, 53, 235);">
+                                        <span class="material-symbols-outlined">
+                                            edit_note
+                                        </span>
+                                    </Button>
+                                    ${task.isDone ? `<Button id="completeTask" onclick="toggleTaskCompletion(${index})" style="background-color: rgb(248, 52, 52);">
+                                        <span class="material-symbols-outlined">
+                                            cancel
+                                        </span>
+                                    </Button>`: `
+                                    <Button id="completeTask" onclick="toggleTaskCompletion(${index})" style="background-color: rgb(48, 190, 48);">
+                                        <span class="material-symbols-outlined">
+                                            check_circle
+                                        </span>
+                                    </Button>`}
+                                    
+                                    <Button id="deleteTask" onclick="removeTask(${index})" style="background-color: rgb(182, 0, 0);">
+                                        <span class="material-symbols-outlined">
+                                            delete
+                                        </span>
+                                    </Button>
+                                </div>
+                            </div>
+                            
+                        </div>
+              
+                    `
+                document.getElementById("tasks").innerHTML += content;
+                index++
+            }
+        };
+
+        updateTasks();
+
+        // add a new task function
+        document.getElementById("add-btn").addEventListener("click", function () {
+            swal.fire({
+                title: "What is your task ?",
+                input: 'text',
+                inputPlaceholder: "Write your Task",
+                showCancelButton: true,
+                inputValidator: (text) => {
+                    if (!text) {
+                        return 'You need to write something!'
+                    } else {
+                        let now = new Date();
+                        let currentDate = now.toLocaleDateString();
+                        let taskObj = {
+                            "title": text,
+                            "date": currentDate,
+                            "isDone": false
+                        }
+                        tasks.push(taskObj);
+                        storeTasks();
+                        updateTasks();
+                    }
+                },
+            })
+        })
+
+
+        // remove a spcific task function
+        function removeTask(index) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `Do you want to delete ${task.title}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#00c853',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    tasks.splice(index, 1);
+                    storeTasks();
+                    updateTasks();
+                }
+            })
+        }
+
+        // edit a specific task w index
+        function updateTask(index) {
+            let task = tasks[index];
+
+            Swal.fire({
+                title: 'Edit your task',
+                input: 'text',
+                inputPlaceholder: 'Enter your new task',
+                inputValue: `${task.title}`,
+                showCancelButton: true,
+                inputValidator: (text) => {
+                    if (!text) {
+                        return 'You need to write something!'
+                    } else {
+                        task.title = text;
+                        storeTasks();
+                        updateTasks();
+                    }
+                },
+            })
+
+
+        }
+
+        // change "isDone" Status
+        function toggleTaskCompletion(index) {
+            let task = tasks[index];
+
+            task.isDone = !task.isDone
+            storeTasks();
+            updateTasks();
+        }
+
+        // store tasks to local storage
+        function storeTasks() {
+            // convert tasks as a string to store it 
+            let tasksString = JSON.stringify(tasks)
+
+            //store it
+            localStorage.setItem("tasks", tasksString)
+        }
+    </script>
+</body>
+
+</html>
